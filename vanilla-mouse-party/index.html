@@ -64,7 +64,7 @@
     let drawId
     const getRandomNumber = (min, max) => Math.round(Math.random() * (max - min + 1)) + min
 
-    window.addEventListener("mousemove", event => {
+      window.addEventListener("mousemove", event => {
       mousePosition.x = event.pageX
       mousePosition.y = event.pageY
     })
@@ -86,7 +86,7 @@
           mousePosition.y - ballSize,
           mousePosition.y
         )}px;`
-        const style = `${left}${top}${color}${size}`;
+        const style = `${left}${top}${color}${size}`
 
         const ball = document.createElement("div")
         ball.classList.add("ball")
@@ -100,12 +100,13 @@
       }, 50)
     }
 
-    window.addEventListener('mouseover', (event) => {
+    window.addEventListener('mouseover', () => {
         // console.log(event)
         drawId = draw()
+        console.log(drawId)
     })
 
-    window.addEventListener('mouseout', (event) => {
+    window.addEventListener('mouseout', () => {
         // console.log(event)
         clearInterval(drawId)
     })
