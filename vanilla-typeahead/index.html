@@ -1,116 +1,202 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
     <title>Typeahead</title>
-</head>
+    <link rel="stylesheet" href="reset.css" />
+  </head>
 
-<body>
+  <body>
     <style>
-        html,
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: 'Courier New', Courier, monospace
-        }
+      html {
+        box-sizing: border-box;
+      }
 
-        .input-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            width: 200px;
-            position: relative
-        }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: "Courier New", Courier, monospace;
+      }
+      h1 {
+        font-size: 28px;
+        padding: 10px;
+      }
 
-        .container {
-            width: 100vw;
-            display: flex;
-            justify-content: space-evenly;
-            flex-direction: column;
-            align-items: center;
-        }
+      .input-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 200px;
+        position: relative;
+      }
 
-        #list {
-            list-style: none;
-            margin: 4px auto 10px auto;
-            position: absolute;
-            top: 25px;
-            left: 15%;
-            padding: 4px;
-            background-color: #fff;
-            border: 1px solid rgba(0, 0, 0, 0.2);
-            border-radius: 4px;
-            box-shadow: 0 5px 10px rgba(0, 0, 0, .2);
-        }
+      .container {
+        width: 100vw;
+        display: flex;
+        justify-content: space-evenly;
+        flex-direction: column;
+        align-items: center;
+      }
 
-        li:hover {
-            background: darkslategray;
-            color: white;
-            cursor: pointer;
-            transition: all .5s;
-        }
+      #selected-list {
+        list-style: none;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+        flex-direction: column;
+        color: black;
+      }
 
-        .selected-container {
-            width: 100%;
-            display: flex;
-            flex-wrap: wrap;
-        }
+      .selected-results {
+        width: 100%;
+        height: 20px;
+        text-align: center;
+        padding: 2px;
+        z-index: 2;
+      }
 
-        .card-container {
-            height: 250px;
-            width: 200px;
-            border: 1px solid black;
-            border-radius: 5px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            text-align: center;
-            margin: 10px;
-        }
+      #list {
+        list-style: none;
+        margin: 4px auto 10px auto;
+        position: absolute;
+        top: 25px;
+        left: 15%;
+        padding: 4px;
+        background-color: #fff;
+        border: 1px solid rgba(0, 0, 0, 0.2);
+        border-radius: 4px;
+        box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+      }
+
+      li:hover {
+        background: darkslategray;
+        color: white;
+        cursor: pointer;
+        transition: all 0.5s;
+      }
+
+      .selected-container {
+        width: 100%;
+        display: flex;
+        flex-wrap: wrap;
+        position: relative;
+        top: 200px;
+      }
+
+      .card-container,
+      .selected-container {
+        height: 250px;
+        width: 200px;
+        border: 1px solid black;
+        border-radius: 5px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        text-align: center;
+        margin: 10px;
+      }
+
+      .hidden {
+        display: none;
+      }
     </style>
 
     <div class="container">
-        <h1>Try Typing...</h1>
-        <div class="input-container">
-            <input type="text" id="search-box">
-            <ul id="list"></ul>
-        </div>
+      <h1>Try Typing...</h1>
+      <div class="input-container">
+        <input type="text" id="search-box" />
+        <ul id="list"></ul>
+      </div>
+      <div class="selected-container">
+        <ul id="selected-list"></ul>
+      </div>
     </div>
+  </body>
 
-</body>
-
-<script>
+  <script>
     let characters = []
-    let list = document.getElementById('list')
+    let list = document.getElementById("list")
     let search = document.getElementById("search-box")
+    let filterResults = document.getElementsByClassName("filter-results")
+    let selectedList = document.querySelector("#selected-list")
+    let removedCharacters = []
 
-    fetch('https://swapi.dev/api/people/').then(response => response.json()).then(response => {
-        characters.push(...response.results)
-        console.log(characters)
-    })
-    setTimeout( () => {
-        console.log(characters)
-        console.log(characters[0].name)
-    }, 1000)
+    fetch("https://swapi.dev/api/people/")
+      .then(response => response.json())
+      .then(response => characters.push(...response.results))
+
+    setInterval(() => {
+      if (search.value === "") {
+        list.classList.add("hidden")
+      } else {
+        list.classList.remove("hidden")
+      }
+    }, 50)
     
+    function clickResult() {
+      if (this.className === 'filter-results') {
+        // remove html from filter list
+        this.remove()
+        // change html class name
+        this.classList.remove('filter-results')
+        this.classList.add('selected-resutls')
+        // find character in character list
+        let cIndex = characters.findIndex(char => char.name === this.innerText)
+        // add to removed character list to keep track
+        removedCharacters.push(characters[cIndex])
+        // remove from character list
+        characters.splice(cIndex,1)
+        // add li element to selectedList
+        selectedList.appendChild(this)
+        console.log(removedCharacters)
+        console.log(characters)
+      } else {
+        // remove html
+        this.remove()
+        let rIndex = removedCharacters.findIndex(char => char.name === this.innerText)
+        // add back to character list
+        characters.push(removedCharacters[rIndex])
+        // remove from removed character list
+        removedCharacters.splice(rIndex, 1)
+        console.log(removedCharacters)
+        console.log(characters)
+      }
+    }
+
     const render = array => {
-        let html = array.join('')
-        list.innerHTML = html
+      let liElementArray = []
+      for (let i = 0; i < array.length; i++) {
+        let result = document.createElement("li")
+        result.classList.add("filter-results")
+        result.innerHTML = array[i].name
+        liElementArray.push(result)
+      }
+      if (search.value === "") {
+        list.innerHTML = ""
+      } else {
+        liElementArray.forEach(li => {
+          li.addEventListener("click", clickResult)
+          list.appendChild(li)
+        })
+      }
     }
 
-    function filterText () {
-        let filtered = characters.filter(char => char.name.toLowerCase().includes(this.value.toLowerCase())).map(char => `<li>${char.name}</li>`)
-        if(filtered.length > 0) {
-            render(filtered)
-        }
+    function filterText() {
+      let filtered = characters.filter(char =>
+        char.name.toLowerCase().includes(this.value.toLowerCase())
+      )
+      if (filtered.length > 0) {
+        render(filtered)
+      }
     }
 
-    search.addEventListener('keyup', filterText)
+    search.addEventListener("keyup", filterText)
 
-</script>
-
+  </script>
 </html>
